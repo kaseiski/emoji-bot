@@ -17,15 +17,29 @@ const isDryRun: boolean = JSON.parse(process.env.IS_DRY_RUN?.toString() ?? "true
 const intervals: number = parseInt(process.env.INTERVALS ?? "60")
 
 // 一度に受け取る絵文字の数(APIのデフォルト)
-const limit = 30
+const limit : number = parseInt(process.env.API_LIMIT ?? "30") 
 
-// ※ 壊れています
+// Bot のアカウント名（@を除く）
+const botName = process.env.BOT_NAME 
+
 // 送られてきたカスタム絵文字をemoji_bot君が再投稿しなおすかどうか
 const isReUpload: boolean = JSON.parse(process.env.IS_REUPLOAD?.toString() ?? "false") as boolean
 
-// ※ 壊れています
 // 再投稿する際にWebpにするかどうか
 const isConvert: boolean = JSON.parse(process.env.IS_CONVERT?.toString() ?? "false") as boolean
+
+// 投稿範囲の設定（add:追加, update:更新, delete:削除）
+const visibilityAdd = process.env.VISIBILITY_ADD
+const visibilityUpdate = process.env.VISIBILITY_UPDATE
+const visibilityDelete = process.env.VISIBILITY_DELETE
+
+// CWをかけるかどうか（add:追加, update:更新, delete:削除）
+const useCwAdd = JSON.parse(process.env.USE_CW_ADD?.toString() ?? "false") as boolean
+const useCwUpdate = JSON.parse(process.env.USE_CW_UPDATE?.toString() ?? "false") as boolean
+const useCwDelete = JSON.parse(process.env.USE_CW_DELETE?.toString() ?? "false") as boolean
+
+// 連合をオフにするかどうか
+const localOnly = JSON.parse(process.env.LOCAL_ONLY?.toString() ?? "false") as boolean
 
 const dbfilename = "moderation.json"
 
@@ -134,43 +148,100 @@ async function pullModerationLogs() {
     // 新しいのだけに絞る
     newModerationLogs = newModerationLogs.filter(l => new Date(l.createdAt) > lastModified)
 
+    // 新しい順になっているので古い順に変える
+    newModerationLogs = newModerationLogs.reverse()
+
     newModerationLogs.forEach( moderationLog => {
         switch(moderationLog.type) {
             case "addCustomEmoji":
                 const emoji = moderationLog.info.emoji as CustomEmoji
-                if(moderationLog.user.username != "emoji_bot") {
+                if(moderationLog.user.username != botName) {
                     resendToAssets(emoji);
-                    createNote(`新しい絵文字が追加されたかも!\n\`:${emoji.name}:\` => :${emoji.name}: \n\n【カテゴリー】\n\`${emoji.category}\`\n\n【ライセンス】\n\`${emoji.license}\`\n\n追加した人：@${moderationLog.user.username}`)
+                    let cwAdd : string | null
+                    let headerAdd : string
+                    if(useCwAdd) {
+                        cwAdd = `新しい絵文字が追加されたかも! :${emoji.name}:\n`
+                        headerAdd = ""
+                    } else {
+                        cwAdd = null
+                        headerAdd = `新しい絵文字が追加されたかも!\n`
+                    }
+                    createNote(`${headerAdd}\`:${emoji.name}:\` => :${emoji.name}: \n\n【カテゴリー】\n\`${emoji.category}\`\n\n【ライセンス】\n\`${emoji.license}\`\n\n追加した人：@${moderationLog.user.username}`, visibilityAdd, cwAdd)
                 }
                 break
             case "updateCustomEmoji":
                 const after = moderationLog.info.after as CustomEmoji
                 const before = moderationLog.info.before as CustomEmoji
-                if(moderationLog.user.username != "emoji_bot") {
+                if(moderationLog.user.username != botName) {
                     // publicUrlが変わってたらカスタム絵文字も再生成
                     if(after.publicUrl != before.publicUrl) {
                         resendToAssets(after);
                     }
-                    createNote(`絵文字が更新されたかも!\n\`:${after.name}:\` => :${after.name}: \n\n【カテゴリー】\n\`${after.category}\`\n\n【ライセンス】\n\`${after.license}\`\n\n更新した人：@${moderationLog.user.username}`)
+                    let cwUpdate : string | null
+                    let headerUpdate : string
+                    if(useCwUpdate) {
+                        cwUpdate = `絵文字が更新されたかも! :${after.name}:\n`
+                        headerUpdate = ""
+                    } else {
+                        cwUpdate = null
+                        headerUpdate = `絵文字が更新されたかも!\n`
+                    }
+                    createNote(`${headerUpdate}\`:${after.name}:\` => :${after.name}: \n\n【カテゴリー】\n\`${after.category}\`\n\n【ライセンス】\n\`${after.license}\`\n\n更新した人：@${moderationLog.user.username}`, visibilityUpdate, cwUpdate)
                 }
                 break
             case "deleteCustomEmoji":
                 const deleted_emoji = moderationLog.info.emoji as CustomEmoji
-                if(moderationLog.user.username != "emoji_bot") {
-                    createNote(`カスタム絵文字が削除されたみたい…\n\`:${deleted_emoji.name}:\` \n\n削除した人：@${moderationLog.user.username}`)
+                if(moderationLog.user.username != botName) {
+                    let cwDelete : string | null
+                    let headerDelete : string
+                    if(useCwDelete) {
+                        cwDelete = `カスタム絵文字が削除されたみたい…\n`
+                        headerDelete = ""
+                    } else {
+                        cwDelete = null
+                        headerDelete = `カスタム絵文字が削除されたみたい…\n`
+                    }
+                    createNote(`${headerDelete}\`:${deleted_emoji.name}:\` \n\n削除した人：@${moderationLog.user.username}`, visibilityDelete, cwDelete)
                 }
                 break
             case "createAvatarDecoration":
-                const deco = moderationLog.info.avatarDecoration as AvatorDecoration 
-                createNote(`新しいデコレーションが追加されたかも!\n\`${deco.name}\` => ${deco.url} \n\n追加した人：@${moderationLog.user.username}`)
+                const deco = moderationLog.info.avatarDecoration as AvatorDecoration
+                let cwdAdd : string | null
+                let headerdAdd : string
+                if(useCwAdd) {
+                    cwdAdd = `新しいデコレーションが追加されたかも!\n\`${deco.name}\``
+                    headerdAdd = ""
+                } else {
+                    cwdAdd = null
+                    headerdAdd = `新しいデコレーションが追加されたかも!\n`
+                } 
+                createNote(`${headerdAdd}\`${deco.name}\` => ${deco.url} \n\n追加した人：@${moderationLog.user.username}`, visibilityAdd, cwdAdd)
                 break
             case "updateAvatarDecoration":
                 const afterd = moderationLog.info.after as AvatorDecoration 
-                createNote(`デコレーションが更新されたかも!\n\`${afterd.name}\` => ${afterd.url} \n\n更新した人：@${moderationLog.user.username}`)
+                let cwdUpdate : string | null
+                let headerdUpdate : string
+                if(useCwUpdate) {
+                    cwdUpdate = `デコレーションが更新されたかも!\n\`${afterd.name}\``
+                    headerdUpdate = ""
+                } else {
+                    cwdUpdate = null
+                    headerdUpdate = `デコレーションが更新されたかも!\n`
+                }
+                createNote(`${headerdUpdate}\`${afterd.name}\` => ${afterd.url} \n\n更新した人：@${moderationLog.user.username}`, visibilityUpdate, cwdUpdate)
                 break
             case "deleteAvatarDecoration":
                 const deleted = moderationLog.info.avatarDecoration as AvatorDecoration 
-                createNote(`デコレーションが削除されたみたい…\n\`${deleted.name}\` \n\n更新した人：@${moderationLog.user.username}`)
+                let cwdDelete : string | null
+                let headerdDelete : string
+                if(useCwDelete) {
+                    cwdDelete = `デコレーションが削除されたみたい…\n`
+                    headerdDelete = ""
+                } else {
+                    cwdDelete = null
+                    headerdDelete = `デコレーションが削除されたみたい…\n`
+                }
+                createNote(`${headerdDelete}\`${deleted.name}\` \n\n更新した人：@${moderationLog.user.username}`, visibilityDelete, cwdDelete)
                 break
             default:
                 console.log("その他なんか:" + moderationLog)
@@ -179,9 +250,10 @@ async function pullModerationLogs() {
     })
 
     // 最終更新日を記録して、ローカルのjsonファイルに書き出し
-    if(newModerationLogs[0]) {
-        fs.writeFileSync(dbfilename, JSON.stringify(newModerationLogs[0]))
-        lastModified = new Date(newModerationLogs[0].createdAt)
+    const latestModerationLog = newModerationLogs.at(-1)
+    if(latestModerationLog) {
+        fs.writeFileSync(dbfilename, JSON.stringify(latestModerationLog))
+        lastModified = new Date(latestModerationLog.createdAt)
     }
 
 }
@@ -196,12 +268,13 @@ if(!intervals || Number.isNaN((interval_ms = intervals * 1000)))
 // Promise を使って、もうちょっとちゃんと綺麗に実装してどうぞ
 setInterval( pullModerationLogs,  interval_ms)
 
-async function createNote(message: string, visibility: string = "public") {
+async function createNote(message: string, visibility: string = "public", cw: string | null = null) {
     const params = {
         i: token,
         text: message,
         visibility: visibility, // public or home
-        localOnly: true, // 連合無しに
+        localOnly: localOnly, // 連合をオフにするかどうか
+        cw: cw // 注釈に設定する文字列
     }
     if(isDryRun) {
         console.log("isDryRun=true のため投稿しません")
