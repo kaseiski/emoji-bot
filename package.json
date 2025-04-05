@@ -1,18 +1,18 @@
 {
   "name": "emoji-bot",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "main": "src/index.ts",
   "author": "@camilla_ett",
   "license": "MIT",
   "devDependencies": {
-    "@types/node": "^22.5.5",
-    "@types/ws": "^8.5.12",
-    "eslint": "^9.11.0",
-    "globals": "^15.9.0",
+    "@types/node": "^22.14.0",
+    "@types/ws": "^8.18.1",
+    "eslint": "^9.24.0",
+    "globals": "^15.15.0",
     "nodemon": "^2.0.22",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.2",
-    "typescript-eslint": "^8.6.0"
+    "typescript": "^5.8.3",
+    "typescript-eslint": "^8.29.0"
   },
   "scripts": {
     "watch": "npm run build:live",
@@ -24,12 +24,15 @@
   },
   "dependencies": {
     "@aspida/axios": "^1.14.0",
-    "@typescript-eslint/eslint-plugin": "^8.6.0",
-    "@typescript-eslint/parser": "^8.6.0",
+    "@typescript-eslint/eslint-plugin": "^8.29.0",
+    "@typescript-eslint/parser": "^8.29.0",
     "aspida": "^1.14.0",
-    "axios": "^1.7.7",
-    "dotenv": "^16.4.5",
-    "ws": "^8.18.0"
+    "axios": "^1.8.4",
+    "dotenv": "^16.4.7",
+    "ws": "^8.18.1"
   },
-  "packageManager": "pnpm@9.11.0+sha512.0a203ffaed5a3f63242cd064c8fb5892366c103e328079318f78062f24ea8c9d50bc6a47aa3567cabefd824d170e78fa2745ed1f16b132e16436146b7688f19b"
+  "packageManager": "pnpm@10.7.1",
+  "volta": {
+    "node": "23.11.0"
+  }
 }

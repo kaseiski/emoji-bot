@@ -1,4 +1,4 @@
-FROM node:22.9.0-slim
+FROM node:23.11.0-slim
 
 RUN corepack enable
 RUN corepack install -g pnpm
