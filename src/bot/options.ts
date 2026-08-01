@@ -52,10 +52,6 @@ export function loadEmojiBotOptions(): EmojiBotOptions {
         console.log("API_TOKENが指定されていません")
         process.exit(1)
     }
-    if (!process.env.BOT_NAME) {
-        console.log("BOT_NAMEが指定されていません")
-        process.exit(1)
-    }
 
     const options: EmojiBotOptions = {
         host: process.env.HOST_NAME,
@@ -67,7 +63,7 @@ export function loadEmojiBotOptions(): EmojiBotOptions {
         visibility: {
             add: process.env.VISIBILITY_ADD ?? "public",
             update: process.env.VISIBILITY_UPDATE ?? "home",
-            delete: process.env.VISIBILITY_DELETE ?? "home", 
+            delete: process.env.VISIBILITY_DELETE ?? "home",
         },
         useCW: {
             add: JSON.parse(process.env.USE_CW_ADD?.toString() ?? "false") as boolean,
