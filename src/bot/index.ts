@@ -1,12 +1,12 @@
 import * as fs from "fs"
-import { CreateNote } from "../service/CreateNote"
-import { GetRecentModerationLogs } from "../service/GetRecentModerationLogs"
 import { EmojiBotOptions, loadEmojiBotOptions } from "./options"
 import { ModerationLog } from "../misskey/model/ModerationLog"
 import { Notification } from "./Notification"
-import { Self } from "../service/Self"
 import { User } from "../misskey/model/User"
-import { MisskeyClient } from "../misskey/api/MisskeyClient"
+import { MisskeyClient } from "../misskey/MisskeyClient"
+import { GetRecentModerationLogs } from "../misskey/api/GetRecentModerationLogs"
+import { CreateNote } from "../misskey/api/CreateNote"
+import { Self } from "../misskey/api/Self"
 
 // TODO: 設定で変更できるようにする？
 const dbfilename = "moderation.json"

@@ -1,5 +1,5 @@
-import { MisskeyClient } from "../misskey/api/MisskeyClient"
-import { Logger } from "../utils/logger"
+import { Logger } from "../../utils/logger"
+import { MisskeyClient } from "../MisskeyClient"
 
 export class CreateNote {
     constructor(

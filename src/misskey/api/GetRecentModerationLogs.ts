@@ -1,6 +1,6 @@
-import { MisskeyClient } from "../misskey/api/MisskeyClient"
-import { ModerationLog, ModerationLogsSchema } from "../misskey/model/ModerationLog"
-import { Logger } from "../utils/logger"
+import { Logger } from "../../utils/logger"
+import { MisskeyClient } from "../MisskeyClient"
+import { ModerationLog, ModerationLogsSchema } from "../model/ModerationLog"
 
 export class GetRecentModerationLogs {
     constructor(

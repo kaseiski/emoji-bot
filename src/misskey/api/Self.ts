@@ -1,6 +1,6 @@
-import { MisskeyClient } from "../misskey/api/MisskeyClient"
-import { User, UserSchema } from "../misskey/model/User"
-import { Logger } from "../utils/logger"
+import { Logger } from "../../utils/logger"
+import { MisskeyClient } from "../MisskeyClient"
+import { User, UserSchema } from "../model/User"
 
 export class Self {
     constructor(
