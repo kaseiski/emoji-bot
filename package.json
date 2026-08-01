@@ -1,6 +1,6 @@
 {
   "name": "emoji-bot",
-  "version": "0.2.5",
+  "version": "0.3.0",
   "main": "src/index.ts",
   "author": "@camilla_ett",
   "license": "MIT",
