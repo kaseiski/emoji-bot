@@ -5,14 +5,23 @@
   "author": "@camilla_ett",
   "license": "MIT",
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^26.1.2",
     "@types/ws": "^8.18.1",
+    "@typescript-eslint/parser": "^8.65.0",
     "eslint": "^10.8.0",
     "globals": "^17.8.0",
     "nodemon": "^3.1.14",
     "tsx": "^4.23.1",
-    "typescript": "^7.0.2",
+    "typescript": "^6.0.3",
     "typescript-eslint": "^8.65.0"
+  },
+  "dependencies": {
+    "@aspida/axios": "^1.14.0",
+    "aspida": "^1.14.0",
+    "axios": "^1.19.0",
+    "dotenv": "^17.4.2",
+    "ws": "^8.21.1"
   },
   "scripts": {
     "watch": "npm run build:live",
@@ -22,14 +31,8 @@
     "lint": "eslint --fix .",
     "api:build": "aspida"
   },
-  "dependencies": {
-    "@aspida/axios": "^1.14.0",
-    "@typescript-eslint/eslint-plugin": "^8.65.0",
-    "@typescript-eslint/parser": "^8.65.0",
-    "aspida": "^1.14.0",
-    "axios": "^1.19.0",
-    "dotenv": "^17.4.2",
-    "ws": "^8.21.1"
+  "engines": {
+    "node": "26.5.1"
   },
   "packageManager": "pnpm@11.18.0"
 }
