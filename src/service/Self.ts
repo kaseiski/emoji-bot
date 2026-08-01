@@ -1,28 +1,27 @@
-import { ApiInstance } from "../misskey/api/$api"
-import { User } from "../misskey/model/User"
+import { MisskeyClient } from "../misskey/api/MisskeyClient"
+import { User, UserSchema } from "../misskey/model/User"
 import { Logger } from "../utils/logger"
 
 export class Self {
-    constructor(private api: ApiInstance, private token: string) {}
+    constructor(
+        private api: MisskeyClient
+    ) { }
 
-    // TODO: User | undefined 以外にいい方法ある？
     async execute(): Promise<User | undefined> {
-        const params = {
-            i: this.token,
+        try {
+            const response = await this.api.post("i")
+
+            const user = UserSchema.parse(response)
+
+            Logger.success(`Login success: @${user.username}`)
+
+            return user
+
+        } catch (error) {
+            if (error instanceof Error) {
+                Logger.error(error.message)
+                return undefined
+            }
         }
-        return this.api.i.post({body: params}).then(response => {
-            const user = response.body
-            if(response.status == 200) {
-                Logger.success(`Login success: @${user.username}`)
-                return user
-            }
-            else {
-                Logger.error("Login failed")
-            }
-            return undefined
-        }).catch( error => {
-            Logger.error(error)
-            return undefined
-        })
     }
 }

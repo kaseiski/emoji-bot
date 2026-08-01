@@ -17,19 +17,16 @@
     "typescript-eslint": "^8.65.0"
   },
   "dependencies": {
-    "@aspida/axios": "^1.14.0",
-    "aspida": "^1.14.0",
-    "axios": "^1.19.0",
     "dotenv": "^17.4.2",
-    "ws": "^8.21.1"
+    "ws": "^8.21.1",
+    "zod": "^4.4.3"
   },
   "scripts": {
     "watch": "npm run build:live",
     "build": "tsc -p .",
     "build:live": "nodemon --watch 'src/**/*.ts' --exec \"ts-node\" src/index.ts",
     "start": "tsx src/index.ts",
-    "lint": "eslint --fix .",
-    "api:build": "aspida"
+    "lint": "eslint --fix ."
   },
   "engines": {
     "node": "26.5.1"

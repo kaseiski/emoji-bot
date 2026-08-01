@@ -1,54 +1,64 @@
-import { ApiInstance } from "../misskey/api/$api"
-import { ModerationLog } from "../misskey/model/ModerationLog"
+import { MisskeyClient } from "../misskey/api/MisskeyClient"
+import { ModerationLog, ModerationLogsSchema } from "../misskey/model/ModerationLog"
 import { Logger } from "../utils/logger"
 
 export class GetRecentModerationLogs {
-    constructor(private api: ApiInstance, private token: string) {}
+    constructor(
+        private api: MisskeyClient
+    ) { }
 
-    async execute(lastModified: Date, limit: number = 30): Promise<ModerationLog[]>  {
-        let moderationLogs: ModerationLog[] = []
-        let newLastModified: Date = new Date() // 命名もうちょっとどうにかならんか…？
-        let untilId = null
-    
+    async execute(
+        lastModified: Date,
+        limit: number = 30
+    ): Promise<ModerationLog[]> {
+        const moderationLogs: ModerationLog[] = []
+
+        let newLastModified = new Date()
+        let untilId: string | undefined
+
         do {
-            let params
-            if (untilId) {
-                params = {
-                    allowPartial: true,
-                    i: this.token,
-                    limit: limit,
-                    type: null,
-                    userId: null,
-                    untilId: untilId
-                }
-            } else {
-                params = {
-                    allowPartial: true,
-                    i: this.token,
-                    limit: limit,
-                    userId: null,
-                    type: null
-                }
+            const params = {
+                allowPartial: true,
+                limit,
+                type: null,
+                userId: null,
+                ...(untilId && { untilId }),
             }
-            await this.api.admin.show_moderation_logs.post({body: params}).then (response => {
-                if(response.status == 200) {
-                    const newModerationLogs = JSON.parse(JSON.stringify(response.body)) as ModerationLog[]
-                    untilId = newModerationLogs.pop()?.id
-                    // nullとか知らん
-                    newLastModified = new Date(newModerationLogs.pop()!.createdAt)
-                    moderationLogs = moderationLogs.concat(newModerationLogs)
+
+            try {
+                const response = await this.api.post(
+                    "admin/show-moderation-logs",
+                    params
+                )
+
+                const newLogs =
+                    ModerationLogsSchema.parse(response)
+
+                untilId = newLogs.at(-1)?.id
+
+                const oldest =
+                    newLogs.at(-1)
+
+                if (oldest) {
+                    newLastModified =
+                        new Date(oldest.createdAt)
                 }
-            }).catch( error => {
-                Logger.error(error)
-            })
-        } while(newLastModified > lastModified)
-    
-        // 新しいのだけに絞る
-        moderationLogs = moderationLogs.filter(l => new Date(l.createdAt) > lastModified)
-    
-        // 新しい順になっているので古い順に変える
-        moderationLogs = moderationLogs.reverse()
-    
+
+                moderationLogs.push(...newLogs)
+
+            } catch (error) {
+                if (error instanceof Error) {
+                    Logger.error(error.message)
+                }
+                break
+            }
+
+        } while (newLastModified > lastModified)
+
         return moderationLogs
+            .filter(
+                log => new Date(log.createdAt) > lastModified
+            )
+            .reverse()
     }
 }
