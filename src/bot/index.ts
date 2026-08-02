@@ -3,23 +3,20 @@ import { EmojiBotOptions, loadEmojiBotOptions } from "./options"
 import { ModerationLog } from "../misskey/model/ModerationLog"
 import { Notification } from "./Notification"
 import { User } from "../misskey/model/User"
-import { MisskeyClient } from "../misskey/MisskeyClient"
+import { MisskeyClient } from "../misskey/api/MisskeyClient"
 import { GetRecentModerationLogs } from "../misskey/api/GetRecentModerationLogs"
-import { CreateNote } from "../misskey/api/CreateNote"
-import { Self } from "../misskey/api/Self"
+import { createMisskeyApi, MisskeyApi } from "../misskey/api/MisskeyApi"
+import { Logger } from "../utils/logger"
 
 // TODO: 設定で変更できるようにする？
 const dbfilename = "moderation.json"
 
 export class EmojiBot {
     protected options: EmojiBotOptions
-    protected misskeyClient: MisskeyClient
+    protected api: MisskeyApi
 
     // TODO: この辺りは後でDIする
     protected getRecentModerationLogs
-    protected createNote
-    protected self
-
     protected notification
 
     // 使う奴
@@ -34,14 +31,10 @@ export class EmojiBot {
             this.options = loadEmojiBotOptions()
         }
 
-        // APIクライアントへの接続 （asを付けなあかんのですか…？）
-        this.misskeyClient = new MisskeyClient(`https://${this.options.host}`, this.options.token)
+        this.api = createMisskeyApi(new MisskeyClient(`https://${this.options.host}`, this.options.token))
 
-        // TODO: DIコンテナでやりましょうね～
-        this.getRecentModerationLogs = new GetRecentModerationLogs(this.misskeyClient)
-        this.createNote = new CreateNote(this.misskeyClient)
-        this.self = new Self(this.misskeyClient)
-        this.notification = new Notification(this.createNote, this.options)
+        this.getRecentModerationLogs = new GetRecentModerationLogs(this.api)
+        this.notification = new Notification(this.options, this.api)
 
         // 起動時に最後のモデレーションログを読み込み。
         // 存在しなければ、現在時刻を返す
@@ -54,9 +47,14 @@ export class EmojiBot {
 
     async run() {
         // 自分自身のログイン情報を取得する
-        this.user = await this.self.execute()
-        if (!this.user) {
+        const result = await this.api.i.execute()
+
+        if (!result.ok) {
+            Logger.error(result.error.type)
             return
+        } else {
+            this.user = result.value
+            Logger.success(`Login: ${this.user.username}`)
         }
 
         // TODO: Promise を使って、もっとちゃんと綺麗に実装して、どうぞ
@@ -64,19 +62,40 @@ export class EmojiBot {
     }
 
     protected pullModerationLogs = async () => {
-        // 最終更新日時より新しいモデレーションログを取得する
-        const moderationLogs = await this.getRecentModerationLogs.execute(this.lastModified, this.options.limit)
 
-        // モデレーションログを元に処理を割り振る
-        if (this.user) {
-            moderationLogs.forEach(moderationLog => this.notification.notify(moderationLog, this.user!))
+        const result =
+            await this.getRecentModerationLogs.execute(
+                this.lastModified,
+                this.options.limit
+            )
+
+        if (!result.ok) {
+            Logger.error(`Failed to fetch moderation logs: ${result.error.type}`)
+            return
         }
 
-        // 最終更新日を記録して、ローカルのjsonファイルに書き出し
+        const moderationLogs = result.value
+
+        if (!this.user) {
+            moderationLogs.forEach(
+                moderationLog =>
+                    this.notification.notify(
+                        moderationLog,
+                        this.user!
+                    )
+            )
+        }
+
         const latestModerationLog = moderationLogs.at(-1)
+
         if (latestModerationLog) {
-            fs.writeFileSync(dbfilename, JSON.stringify(latestModerationLog))
-            this.lastModified = new Date(latestModerationLog.createdAt)
+            fs.writeFileSync(
+                dbfilename,
+                JSON.stringify(latestModerationLog)
+            )
+
+            this.lastModified =
+                new Date(latestModerationLog.createdAt)
         }
     }
 }
